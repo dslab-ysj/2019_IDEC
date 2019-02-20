@@ -429,12 +429,7 @@ int hext_ledsw_main(int argc, FAR char *argv[])
 		gpio_write(pin_red, gpio_read(pin_sw1));
 		gpio_write(pin_gre, gpio_read(pin_sw2));
 
-		if(gpio_read(pin_sw1)==1 && gpio_read(pin_sw2) == 1)
-		{
-			gpio_write(pin_red, LOW);
-			gpio_write(pin_gre, LOW);
-			break;
-		}
+		if(gpio_read(pin_sw1) && gpio_read(pin_sw2) ) break;
 	}
 
 	printf("************ HexT LED-SW PROGRAM END ************\n");
