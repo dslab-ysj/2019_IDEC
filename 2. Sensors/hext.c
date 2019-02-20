@@ -66,7 +66,11 @@ int hext_main(int argc, FAR char *argv[])
 	else if ( (argc==4) && (strcmp(argv[1],"buzzer")==0) ) {hext_buzzer_main(argc,argv);}
 	else if ( (argc==4) && (strcmp(argv[1],"pwmled")==0) ) {hext_pwmled_main(argc,argv);}
 	else if ( (argc==4) && (strcmp(argv[1],"servo")==0) ) {hext_servo_main(argc,argv);}
-
+/*******************************************************************************************/
+	else if ( (argc==2) && (strcmp(argv[1],"quiz1")==0) ) {hext_QUIZ1_main(argc,argv);}
+	else if ( (argc==2) && (strcmp(argv[1],"quiz2")==0) ) {hext_QUIZ2_main(argc,argv);}
+	else if ( (argc==2) && (strcmp(argv[1],"quiz3")==0) ) {hext_QUIZ3_main(argc,argv);}
+/*******************************************************************************************/
 	else if ( (argc==2) && (strcmp(argv[1],"ledsw")==0) ) {hext_ledsw_main(argc,argv);}
 	else if ( (argc==2) && (strcmp(argv[1],"toggle")==0) ) {hext_toggle_main(argc,argv);}
 	else if ( (argc==2) && (strcmp(argv[1],"dimming")==0) ) {hext_dimming_main(argc,argv);}
@@ -80,6 +84,156 @@ int hext_main(int argc, FAR char *argv[])
 	return 0;
 }
 
+int hext_QUIZ3_main(int argc, FAR char *argv[])
+{
+	int fd_red;
+	int fd_gre;
+	int pin_red = 0;
+	int pin_gre = 0;
+	int pin_sw1 = 0;
+	int pin_sw2 = 0;
+	int val1 = 0;
+	int val2 = 0;
+	int PERIOD=1000;
+	int DUTY_CYCLE=0;
+
+	// Switch board : GPIO 0
+	pin_sw1 = PIN_D2;
+	pin_sw2 = PIN_D4;
+
+	// LED board : PWM 0
+	pin_red = PWM0;
+	pin_gre = PWM1;
+
+	fd_red = pwm_open(pin_red);
+	fd_gre = pwm_open(pin_gre);
+
+	printf("*********** HexT QUIZ3 START ***********\n");
+
+	while(1)
+	{
+		val1 = gpio_read(pin_sw1);
+		val2 = gpio_read(pin_sw2);
+		up_mdelay(50);
+
+		if(val1 && !val2)
+		{
+			DUTY_CYCLE = DUTY_CYCLE + 50; //DUTY_CYCLE+=50;
+			if(DUTY_CYCLE >= PERIOD) DUTY_CYCLE = PERIOD - 1;
+			printf("Brightness : %d/%d\n",DUTY_CYCLE,PERIOD);
+		}
+		else if(!val1 && val2)
+		{
+			DUTY_CYCLE = DUTY_CYCLE - 50;
+			if(DUTY_CYCLE < 0 ) DUTY_CYCLE = 0;
+			printf("Brightness : %d/%d\n",DUTY_CYCLE,PERIOD);
+		}
+		else if(val1 && val2)
+		{
+			printf("Exit\n");
+			break;
+		}
+		else {}
+		pwm_write(fd_red,PERIOD,DUTY_CYCLE);
+		pwm_write(fd_gre,PERIOD,DUTY_CYCLE);
+
+		up_mdelay(100);
+	}
+
+	printf("************ HexT QUIZ3 END ************\n");
+
+	pwm_write(fd_red, PERIOD, 0);
+	pwm_write(fd_gre, PERIOD, 0);
+	pwm_close(fd_red);
+	pwm_close(fd_gre);
+
+	return 0;
+}
+
+int hext_QUIZ2_main(int argc, FAR char *argv[])
+{
+	int pin_red = 0;
+	int pin_gre= 0;
+	int pin_sw1 = 0;
+	int pin_sw2 = 0;
+
+	pin_red = PIN_D2;
+	pin_gre = PIN_D4;
+	pin_sw1 = PIN_D7;
+	pin_sw2 = PIN_D8;
+
+	int val1=0;
+	int val2=0;
+	int state = 0; // 0 : LED OFF, 1 : LED ON
+
+	printf("*********** HexT QUIZ2 START ***********\n");
+
+	while(1)
+	{
+		val1=gpio_read(pin_sw1); // LED sw
+		val2=gpio_read(pin_sw2); // exit sw
+		up_mdelay(100);
+
+		if (val1) // LED SW ON
+		{
+			if(state) // LED ON
+			{
+				gpio_write(pin_red,LOW);
+				gpio_write(pin_gre,LOW);
+				state=0;
+				printf("LED OFF\n");
+			}
+			else // LED OFF
+			{
+				gpio_write(pin_red,HIGH);
+				gpio_write(pin_gre,HIGH);
+				state=1;
+				printf("LED ON\n");
+			}
+		}
+		else { }
+
+		if(val2)
+		{
+			gpio_write(pin_red,HIGH);
+			gpio_write(pin_gre,HIGH);
+			break;
+		}
+		else {}
+	}
+
+	printf("************ HexT QUIZ2 END ************\n");
+
+	return 0;
+}
+
+int hext_QUIZ1_main(int argc, FAR char *argv[])
+{
+	int pin_red = 0;
+	int pin_gre= 0;
+	int pin_sw1 = 0;
+	int pin_sw2 = 0;
+
+	pin_red = PIN_D2;
+	pin_gre = PIN_D4;
+
+	pin_sw1 = PIN_D7;
+	pin_sw2 = PIN_D8;
+
+	printf("*********** HexT QUIZ1 START ***********\n");
+
+	while(1)
+	{
+		gpio_write(pin_red,gpio_read(pin_sw1));
+		gpio_write(pin_gre,gpio_read(pin_sw2));
+
+		if (gpio_read(pin_sw1) && gpio_read(pin_sw2)) break;
+	}
+
+	printf("************ HexT QUIZ1 END ************\n");
+
+	return 0;
+}
 
 int hext_led_main(int argc, FAR char *argv[])
 {
@@ -129,7 +283,6 @@ int hext_led_main(int argc, FAR char *argv[])
 
 	return 0;
 }
-
 
 int hext_switch_main(int argc, FAR char *argv[])
 {
@@ -429,7 +582,12 @@ int hext_ledsw_main(int argc, FAR char *argv[])
 		gpio_write(pin_red, gpio_read(pin_sw1));
 		gpio_write(pin_gre, gpio_read(pin_sw2));
 
-		if(gpio_read(pin_sw1) && gpio_read(pin_sw2) ) break;
+		if(gpio_read(pin_sw1)==1 && gpio_read(pin_sw2) == 1)
+		{
+			gpio_write(pin_red, LOW);
+			gpio_write(pin_gre, LOW);
+			break;
+		}
 	}
 
 	printf("************ HexT LED-SW PROGRAM END ************\n");
